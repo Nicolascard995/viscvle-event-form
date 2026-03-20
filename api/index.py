@@ -7,7 +7,8 @@ load_dotenv()
 
 app = FastAPI()
 
-N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL") or os.getenv("N8N_WEBHOOK")
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
+VERCEL_URL = os.getenv("VERCEL_URL", "unknown")
 
 @app.post("/api/submit")
 async def submit_form(request: Request):
