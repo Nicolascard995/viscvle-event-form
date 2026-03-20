@@ -129,19 +129,20 @@ export default function ViscvleEventForm() {
 
     const validateStep = () => {
         if (current.type === "select") {
-            return !!data[current.id];
+            if (!data[current.id]) return { isValid: false, label: current.question };
         }
         if (current.type === "fields" || current.type === "date_info" || current.type === "contact_fields") {
             const missing = current.fields
                 .filter(f => f.required)
                 .find(f => !data[f.name]);
-            if (missing) return false;
+            if (missing) return { isValid: false, label: missing.label, name: missing.name };
         }
         if (current.type === "payment_select") {
-            if (!data[current.id]) return false;
-            if (data[current.id] === "rechnung" && (!data.billing_company || !data.billing_address)) return false;
+            if (!data[current.id]) return { isValid: false, label: "Zahlungsart", name: current.id };
+            if (data[current.id] === "rechnung" && !data.billing_company) return { isValid: false, label: "Firma (Rechnungsempfänger)", name: "billing_company" };
+            if (data[current.id] === "rechnung" && !data.billing_address) return { isValid: false, label: "Rechnungsadresse", name: "billing_address" };
         }
-        return true;
+        return { isValid: true };
     };
 
     const handleSubmit = async () => {
@@ -171,8 +172,15 @@ export default function ViscvleEventForm() {
     };
 
     const handleNext = () => {
-        if (!validateStep()) {
-            setError("Bitte füllen Sie alle Pflichtfelder aus.");
+        const validation = validateStep();
+        if (!validation.isValid) {
+            const msg = `Bitte füllen Sie das Feld "${validation.label}" aus.`;
+            setError(msg);
+            alert(msg);
+            if (validation.name) {
+                const el = document.getElementsByName(validation.name)[0];
+                if (el) el.focus();
+            }
             return;
         }
         setError(null);
@@ -257,6 +265,7 @@ export default function ViscvleEventForm() {
                             {current.options.map((opt) => (
                                 <button
                                     key={opt.value}
+                                    name={current.id}
                                     onClick={() => { updateField(current.id, opt.value); handleNext(); }}
                                     style={{
                                         ...styles.optionBtn,
@@ -283,6 +292,7 @@ export default function ViscvleEventForm() {
                                         </div>
                                         {field.type === "textarea" ? (
                                             <textarea
+                                                name={field.name}
                                                 style={styles.textarea}
                                                 placeholder={field.placeholder}
                                                 value={data[field.name] || ""}
@@ -291,6 +301,7 @@ export default function ViscvleEventForm() {
                                             />
                                         ) : field.type === "select" ? (
                                             <select
+                                                name={field.name}
                                                 style={styles.input}
                                                 value={data[field.name] || ""}
                                                 onChange={(e) => updateField(field.name, e.target.value)}
@@ -302,6 +313,7 @@ export default function ViscvleEventForm() {
                                             </select>
                                         ) : (
                                             <input
+                                                name={field.name}
                                                 type={field.type}
                                                 style={styles.input}
                                                 placeholder={field.placeholder}
@@ -376,6 +388,7 @@ export default function ViscvleEventForm() {
                                     <div style={styles.fieldGroup}>
                                         <label style={styles.fieldLabel}>Firma (Rechnungsempfänger) <span style={{ color: COLORS.color6 }}>*</span></label>
                                         <input
+                                            name="billing_company"
                                             style={styles.input}
                                             value={data.billing_company || ""}
                                             onChange={(e) => updateField("billing_company", e.target.value)}
@@ -384,6 +397,7 @@ export default function ViscvleEventForm() {
                                     <div style={styles.fieldGroup}>
                                         <label style={styles.fieldLabel}>Rechnungsadresse <span style={{ color: COLORS.color6 }}>*</span></label>
                                         <textarea
+                                            name="billing_address"
                                             style={styles.textarea}
                                             placeholder="Straße, PLZ, Ort"
                                             value={data.billing_address || ""}
