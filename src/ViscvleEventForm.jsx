@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const FONT_URL = "https://fonts.googleapis.com/css2?family=Lora:wght@600;700&display=swap";
 
@@ -101,13 +101,54 @@ export default function ViscvleEventForm() {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [honeypot, setHoneypot] = useState("");
+
+    // Load persisted data
+    useEffect(() => {
+        const savedData = localStorage.getItem("viscvle_form_data");
+        const savedStep = localStorage.getItem("viscvle_form_step");
+        if (savedData) setData(JSON.parse(savedData));
+        if (savedStep) setStep(parseInt(savedStep, 10));
+    }, []);
+
+    // Save persistence
+    useEffect(() => {
+        if (!submitted) {
+            localStorage.setItem("viscvle_form_data", JSON.stringify(data));
+            localStorage.setItem("viscvle_form_step", step.toString());
+        } else {
+            localStorage.removeItem("viscvle_form_data");
+            localStorage.removeItem("viscvle_form_step");
+        }
+    }, [data, step, submitted]);
 
     const current = formSteps[step];
     const progress = ((step + 1) / formSteps.length) * 100;
 
     const updateField = (key, value) => setData((d) => ({ ...d, [key]: value }));
 
+    const validateStep = () => {
+        if (current.type === "select") {
+            return !!data[current.id];
+        }
+        if (current.type === "fields" || current.type === "date_info" || current.type === "contact_fields") {
+            const missing = current.fields
+                .filter(f => f.required)
+                .find(f => !data[f.name]);
+            if (missing) return false;
+        }
+        if (current.type === "payment_select") {
+            if (!data[current.id]) return false;
+            if (data[current.id] === "rechnung" && (!data.billing_company || !data.billing_address)) return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async () => {
+        if (honeypot) {
+            setSubmitted(true); // Fake success for bots
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
@@ -130,8 +171,14 @@ export default function ViscvleEventForm() {
     };
 
     const handleNext = () => {
+        if (!validateStep()) {
+            setError("Bitte füllen Sie alle Pflichtfelder aus.");
+            return;
+        }
+        setError(null);
         if (step < formSteps.length - 1) {
             setStep(step + 1);
+            window.scrollTo(0, 0);
         } else {
             handleSubmit();
         }
@@ -191,6 +238,17 @@ export default function ViscvleEventForm() {
 
                 {/* Question Card */}
                 <div style={styles.questionCard}>
+                    {/* Honeypot field for bots */}
+                    <div style={{ display: "none" }} aria-hidden="true">
+                        <input
+                            type="text"
+                            name="confirm_email_address_verification"
+                            value={honeypot}
+                            onChange={(e) => setHoneypot(e.target.value)}
+                            tabIndex="-1"
+                            autoComplete="off"
+                        />
+                    </div>
                     <h2 style={styles.question}>{current.question}</h2>
 
                     {/* Paso 1: Select simple */}
