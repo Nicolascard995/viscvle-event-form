@@ -156,7 +156,10 @@ export default function ViscvleEventForm() {
             const response = await fetch("/api/submit", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    ...data,
+                    confirm_email_address_verification: honeypot
+                }),
             });
 
             if (response.ok) {

@@ -27,7 +27,7 @@ async def submit_form(request: Request):
             N8N_WEBHOOK_URL,
             json={
                 "source": "VISCVLE Event Form (FastAPI)",
-                "timestamp": requests.utils.quote(os.getenv("VERCEL_URL", "unknown")), # Just for tracking
+                "host": os.getenv("VERCEL_URL", "unknown"),
                 **data
             },
             timeout=10
