@@ -165,7 +165,8 @@ export default function ViscvleEventForm() {
             if (response.ok) {
                 setSubmitted(true);
             } else {
-                setError("Entschuldigung, es gab ein Problem. Bitte versuchen Sie es später erneut.");
+                const errorData = await response.json();
+                setError(errorData.detail || "Entschuldigung, es gab ein Problem. Bitte versuchen Sie es später erneut.");
             }
         } catch (err) {
             setError("Verbindungsfehler. Bitte prüfen Sie Ihre Internetverbindung.");
