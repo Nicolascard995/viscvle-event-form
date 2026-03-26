@@ -50,9 +50,11 @@ async def submit_form(request: Request):
             timeout=15
         )
         
-        print(f"n8n response status: {response.status_code}")
         if response.status_code >= 400:
-            raise HTTPException(status_code=502, detail=f"Target server error: {response.status_code}")
+            url_preview = f"{N8N_WEBHOOK_URL[:30]}..." if N8N_WEBHOOK_URL else "None"
+            error_detail = f"n8n error {response.status_code} at {url_preview} (Env: {VERCEL_ENV})"
+            print(f"ERROR: {error_detail}")
+            raise HTTPException(status_code=502, detail=error_detail)
             
         return {"message": "Success"}
         
