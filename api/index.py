@@ -11,6 +11,7 @@ N8N_WEBHOOK_URL_PROD = os.getenv("N8N_WEBHOOK_URL_PROD")
 N8N_WEBHOOK_URL_TEST = os.getenv("N8N_WEBHOOK_URL_TEST")
 N8N_WEBHOOK_URL_FALLBACK = os.getenv("N8N_WEBHOOK_URL")
 VERCEL_ENV = os.getenv("VERCEL_ENV", "development")
+VERCEL_URL = os.getenv("VERCEL_URL", "unknown")
 
 # Select the appropriate webhook URL based on the environment
 if VERCEL_ENV == "production":
