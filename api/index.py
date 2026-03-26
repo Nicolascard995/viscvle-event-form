@@ -7,8 +7,17 @@ load_dotenv()
 
 app = FastAPI()
 
-N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
-VERCEL_URL = os.getenv("VERCEL_URL", "unknown")
+N8N_WEBHOOK_URL_PROD = os.getenv("N8N_WEBHOOK_URL_PROD")
+N8N_WEBHOOK_URL_TEST = os.getenv("N8N_WEBHOOK_URL_TEST")
+N8N_WEBHOOK_URL_FALLBACK = os.getenv("N8N_WEBHOOK_URL")
+VERCEL_ENV = os.getenv("VERCEL_ENV", "development")
+
+# Select the appropriate webhook URL based on the environment
+if VERCEL_ENV == "production":
+    N8N_WEBHOOK_URL = N8N_WEBHOOK_URL_PROD or N8N_WEBHOOK_URL_FALLBACK
+else:
+    # Use test URL for preview or development environments
+    N8N_WEBHOOK_URL = N8N_WEBHOOK_URL_TEST or N8N_WEBHOOK_URL_FALLBACK
 
 @app.post("/api/submit")
 @app.post("/submit")
@@ -56,8 +65,12 @@ async def submit_form(request: Request):
 async def health_check():
     return {
         "status": "ok",
-        "env_check": {
-            "webhook_set": bool(N8N_WEBHOOK_URL),
-            "vercel_url": VERCEL_URL
+        "environment": VERCEL_ENV,
+        "config": {
+            "webhook_active": bool(N8N_WEBHOOK_URL),
+            "webhook_type": "production" if (VERCEL_ENV == "production" and N8N_WEBHOOK_URL_PROD) else ("test" if N8N_WEBHOOK_URL_TEST else "fallback"),
+            "prod_url_set": bool(N8N_WEBHOOK_URL_PROD),
+            "test_url_set": bool(N8N_WEBHOOK_URL_TEST),
+            "fallback_url_set": bool(N8N_WEBHOOK_URL_FALLBACK)
         }
     }
